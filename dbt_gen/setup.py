@@ -9,5 +9,7 @@ setup(name= 'dbt_gen',
     licence='MIT',
     keywords='DBT data sql generator'
     packages=['dbt_gen'],
-    install_requires=['dbt>=0.9.1',],
+    install_requires=['dbt>=0.9.1',
+                      'snowflake-connector-python>=1.4.15',
+                     ],
     zip_safe=False)
