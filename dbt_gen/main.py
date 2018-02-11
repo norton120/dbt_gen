@@ -1,51 +1,53 @@
-
-import tkinter as tk
 import os.path as path
 import sys
+import time
 import yaml
-import logging
+from global_logger import GLOBAL_LOGGER
+from dbt_git import dbt_git
+from gui import Gui
 
-
-logger = logging.getLogger('dbt_gen')
-
+logger = GLOBAL_LOGGER
+win = Gui()
+ 
 def main(args=None):
-    
+          
     config_file = path.sep.join([path.expanduser('~'),'.dbt_gen','config.yml'])
     log_file = path.sep.join([path.expanduser('~'),'.dbt_gen','dbt_gen.log'])
-
-    setup_logger(log_file)
    
-    config = determine_config_status(config_file)
+    config = determine_config_status(config_file)   
 
+    check_out_master(config['dbt_root_path'])
 
-        
-
+    display_lake_tables(gather_lake_tables(config['data_lake_database'],config['data_lake_schemas']))   
     
+def check_out_master(repo):
+    dgit = dbt_git(repo)
+    if dgit.prep_repo():
+        win.gathering_lake_tables()
+    else:
+        win.failed_to_prepare_repo()
+        time.sleep(5)
+        sys.exit()
 
+def gather_lake_tables(databse, schemas)
+    pass
+
+def display_lake_tables(tables)
+    pass
  
 def determine_config_status(config_file):
     logger.debug('Checking for config file')
     if not path.isfile(config_file):
         # startup config dialog
-        logger.info('Config not found. Starting setup dialog.')
+        logger.debug('Config not found. Starting setup dialog.')
         sys.exit()
 
     logger.info('Config found.')
     return import_config(config_file)
-
-
-
-def setup_logger(log_file):
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(log_file)
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-    logger.addHandler(handler)
                         
 
 def import_config(config_file):
     try:
-        logger.debug('Opening config.')
         config = yaml.load(open(config_file))
     except:
         logger.debug('Failed to open or read config')
