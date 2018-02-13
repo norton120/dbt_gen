@@ -11,14 +11,21 @@ logger = GLOBAL_LOGGER
 win = Gui()
  
 def main(args=None):
-          
+
+         
     config_file = path.sep.join([path.expanduser('~'),'.dbt_gen','config.yml'])
     log_file = path.sep.join([path.expanduser('~'),'.dbt_gen','dbt_gen.log'])
    
     config = determine_config_status(config_file)   
-
-    check_out_master(config['dbt_root_path'])
     
+    win.welcome_message()
+    win.prepairing_dbt_repo()
+    check_out_master(config['dbt_root_path'])
+    time.sleep(1)
+
+    win.repo_prepaired()
+    time.sleep(1)
+
     display_lake_tables(gather_lake_tables(config['connector'],config['data_lake_database'],config['data_lake_schemas']))
     exit();
     
@@ -33,6 +40,7 @@ def check_out_master(repo):
         sys.exit()
 
 def gather_lake_tables(creds, database, schemas):
+    win.gathering_lake_tables()
     wh = Warehouse(creds)
     return wh.get_lake_tables(database,schemas)
 
