@@ -131,8 +131,38 @@ class Gui:
         while _locals['setting_up_columns']:
             self.window.update()
         
-    def select_model_group(self, model_groups):
-        pass
+    def select_model_group(self, model_groups,callback):
+        self.matrix.destroy()
+        self.button.destroy()
+        
+        frame = Frame(self.window, bd=2, relief=SUNKEN)
+
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        _locals = {"selecting_model_group":True}
+
+        self.v.set("Please select the model group for the new table:")
+            
+        self.scrollbar = Scrollbar(self.window)
+        self.scrollbar.grid(row=0, column=1, sticky=N+S)
+        
+        self.listbox = Listbox(self.window, yscrollcommand=self.scrollbar.set)
+        for i in model_groups:
+            self.listbox.insert(END, i)
+        self.listbox.config(width=90, height=45)
+        self.listbox.grid(row=4, column=0, columnspan=10, rowspan=10, padx=1)
+        self.scrollbar.config(command=self.listbox.yview)
+        
+        def select_table_click():
+            callback(self.listbox.get(self.listbox.curselection()))    
+            _locals['selecting_model_group'] = False
+
+        self.button = Button(self.window, text= "Select Model Group", command = select_table_click)
+        self.button.grid(row=12, column= 8)
+        
+        while _locals['selecting_model_group']:
+            self.window.update()
 
     def generating_models_and_tests(self, table_name):
         pass

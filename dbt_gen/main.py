@@ -41,7 +41,8 @@ def main(args=None):
     
     display_potential_columns(columns, _set_column_preferences)    
     
-    print(column_preferences)
+    select_model_group(model_groups, _set_model_group)
+
     
 def check_out_master(repo):
     dgit = dbt_git(repo)
@@ -91,12 +92,19 @@ def gather_potential_columns(creds,database):
     return wh.get_table_columns(database,table_selections['approved_schema'],table_selections['approved_table'])
 
 def display_potential_columns(columns,callback):
-    win.column_matrix(columns,callback)
-    time.sleep(10) 
-
+    return win.column_matrix(columns,callback)
+    
 def _set_column_preferences(updated_preferences):
     global column_preferences
     column_preferences = updated_preferences
+
+def select_model_group(model_groups,callback):
+    win.select_model_group(model_groups, callback)
+        
+    
+def _set_model_group(selected_model_group):
+    global table_selections
+    table_selections['model_group'] = selected_model_group
 
 def determine_config_status(config_file):
     logger.debug('Checking for config file')
