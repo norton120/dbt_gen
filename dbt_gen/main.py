@@ -13,13 +13,16 @@ table_selections = dict()
 
 def main(args=None):
          
+    global column_preferences 
+    column_preferences= dict()
+
     config_file = os.path.sep.join([os.path.expanduser('~'),'.dbt_gen','config.yml'])
     log_file = os.path.sep.join([os.path.expanduser('~'),'.dbt_gen','dbt_gen.log'])
 
     config = determine_config_status(config_file)   
     
     model_groups = [folder for folder in os.listdir(config['dbt_root_path'] + os.path.sep + 'models') if os.path.isdir(config['dbt_root_path'] + os.path.sep + 'models' + os.path.sep + folder)]
-
+    
     win.welcome_message()
     win.prepairing_dbt_repo()
     check_out_master(config['dbt_root_path'])
@@ -34,6 +37,12 @@ def main(args=None):
     
     build_new_repo(config['dbt_root_path'])
 
+    columns = gather_potential_columns(config['connector'],config['data_lake_database'])
+    
+    display_potential_columns(columns, _set_column_preferences)    
+    
+    print(column_preferences)
+    
 def check_out_master(repo):
     dgit = dbt_git(repo)
     try:
@@ -43,10 +52,10 @@ def check_out_master(repo):
         time.sleep(3)
         sys.exit()
 
-def gather_lake_tables(creds, database, schemas):
+def gather_lake_tables(creds, database, schema):
     win.gathering_lake_tables()
     wh = Warehouse(creds)
-    return wh.get_lake_tables(database,schemas)
+    return wh.get_lake_tables(database,schema)
 
 def display_lake_tables(tables, callback):
     return win.select_lake_table(tables,callback)
@@ -77,7 +86,18 @@ def build_new_repo(repo):
         logger.error('Failed to build new repo for table {}. error: {}'.format(table, sys.exc_info()[0]))
         win.failed_to_build_repo(table)
 
-     
+def gather_potential_columns(creds,database):
+    wh = Warehouse(creds)
+    return wh.get_table_columns(database,table_selections['approved_schema'],table_selections['approved_table'])
+
+def display_potential_columns(columns,callback):
+    win.column_matrix(columns,callback)
+    time.sleep(10) 
+
+def _set_column_preferences(updated_preferences):
+    global column_preferences
+    column_preferences = updated_preferences
+
 def determine_config_status(config_file):
     logger.debug('Checking for config file')
     if not os.path.isfile(config_file):
