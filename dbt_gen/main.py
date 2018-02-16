@@ -6,6 +6,7 @@ from global_logger import GLOBAL_LOGGER
 from dbt_git import dbt_git
 from gui import Gui
 from warehouse import Warehouse
+from scaffold import Scaffold
 
 logger = GLOBAL_LOGGER
 win = Gui()
@@ -20,6 +21,8 @@ def main(args=None):
     log_file = os.path.sep.join([os.path.expanduser('~'),'.dbt_gen','dbt_gen.log'])
 
     config = determine_config_status(config_file)   
+    
+    print(config['templates']); sys.exit()
     
     model_groups = [folder for folder in os.listdir(config['dbt_root_path'] + os.path.sep + 'models') if os.path.isdir(config['dbt_root_path'] + os.path.sep + 'models' + os.path.sep + folder)]
     
@@ -42,6 +45,9 @@ def main(args=None):
     display_potential_columns(columns, _set_column_preferences)    
     
     select_model_group(model_groups, _set_model_group)
+    
+    generate_scaffold(config,column_preferences,table_selections['model_grouping'],table_selections['approved_schema'],table_selections['approved_table'])
+
 
     
 def check_out_master(repo):
@@ -100,11 +106,14 @@ def _set_column_preferences(updated_preferences):
 
 def select_model_group(model_groups,callback):
     win.select_model_group(model_groups, callback)
-        
-    
+            
 def _set_model_group(selected_model_group):
     global table_selections
     table_selections['model_group'] = selected_model_group
+
+def generate_scaffold(config,column_preferences,model_grouping,schema,table):
+    scaffold = Scaffold(config,column_preferences,model_grouping,schema,table)
+
 
 def determine_config_status(config_file):
     logger.debug('Checking for config file')
