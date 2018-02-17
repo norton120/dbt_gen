@@ -22,8 +22,6 @@ def main(args=None):
 
     config = determine_config_status(config_file)   
     
-    print(config['templates']); sys.exit()
-    
     model_groups = [folder for folder in os.listdir(config['dbt_root_path'] + os.path.sep + 'models') if os.path.isdir(config['dbt_root_path'] + os.path.sep + 'models' + os.path.sep + folder)]
     
     win.welcome_message()
@@ -90,7 +88,7 @@ def build_new_repo(repo):
     try:
         dgit.create_new_branch(formatted_for_branch)
     except:
-        logger.error('Failed to build new repo for table {}. error: {}'.format(table, sys.exc_info()[0]))
+        logger.error('Failed to build new repo for table {}. error: {} : {}'.format(table, sys.exc_info()[0], sys.exc_info[1]))
         win.failed_to_build_repo(table)
 
 def gather_potential_columns(creds,database):
@@ -109,11 +107,11 @@ def select_model_group(model_groups,callback):
             
 def _set_model_group(selected_model_group):
     global table_selections
-    table_selections['model_group'] = selected_model_group
+    table_selections['model_grouping'] = selected_model_group
 
 def generate_scaffold(config,column_preferences,model_grouping,schema,table):
     scaffold = Scaffold(config,column_preferences,model_grouping,schema,table)
-
+    scaffold.generate()
 
 def determine_config_status(config_file):
     logger.debug('Checking for config file')
