@@ -85,12 +85,13 @@ class Gui:
         self.checkbox_vars = dict()
    
         for column in columns:
-            self.checkbox_vars[column] = [IntVar(), IntVar(),IntVar(),StringVar()]
+            self.checkbox_vars[column] = [IntVar(),IntVar(),IntVar(),IntVar(),StringVar()]
 
         self.matrix._widgets = []
         
         header = []
         header.append(Label(self.window, text = "Column Name", borderwidth=0, width= 15))
+        header.append(Label(self.window, text = "Exclude?", borderwidth=0, width= 10))
         header.append(Label(self.window, text = "Not Null?", borderwidth=0, width= 10))
         header.append(Label(self.window, text = "Unique?", borderwidth=0, width= 10))
         header.append(Label(self.window, text = "Description", borderwidth=0, width= 10))
@@ -99,19 +100,21 @@ class Gui:
             col.grid(row=0, column=index, sticky="nsew", padx=1,pady=1)        
 
         self.matrix._widgets.append(header)
+
         for row in range(len(columns)-1):
             current_row = []
             current_row.append(Label(self.window, text = columns[row], borderwidth=0, width= 15))
             current_row.append(Checkbutton(self.window, variable=self.checkbox_vars[columns[row]][0]))
             current_row.append(Checkbutton(self.window, variable=self.checkbox_vars[columns[row]][1]))
-            current_row.append(Entry(self.window, text='', textvariable=self.checkbox_vars[columns[row]][2]))
+            current_row.append(Checkbutton(self.window, variable=self.checkbox_vars[columns[row]][2]))
+            current_row.append(Entry(self.window, text='', textvariable=self.checkbox_vars[columns[row]][3]))
 
             for index, r in enumerate(current_row):
                 r.grid(row=row,  column=index, sticky="nsew", padx=1,pady=1)
 
             self.matrix._widgets.append(current_row)
         
-        for col in range(5):
+        for col in range(6):
             self.matrix.grid_columnconfigure(col, weight=1)
 
         self.matrix.grid()
