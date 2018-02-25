@@ -16,8 +16,6 @@ class Scaffold:
         self.schema = schema
         self.table = table
 
-
-
     def _generate_file(self,layer):
         self.logger.debug("Generating mid model...")          
         prefix = 'MID_' if layer.upper() == 'MID' else ''
@@ -57,7 +55,7 @@ class Scaffold:
                 line = template.readline()
 
             if layer == 'analytics':
-                column_comments = {(column,comment[3]) for column, comment in self.columns.items() if comment[3] != '' }
+                column_comments = dict((column,comment[3]) for column, comment in self.columns.items() if comment[3] != '' )
                 target.write(self._add_comments(column_comments)) 
 
         except:
@@ -69,6 +67,8 @@ class Scaffold:
 
     def _add_comments(self,column_comments):
         comment_block = ''' 
+
+
                         {{ config({
                             "post-hook":[
                         '''
@@ -77,18 +77,54 @@ class Scaffold:
             # scrub quotes, since people always add them 
             comment = comment.replace("'","`").replace('"','`') 
 
-            comment_block += '"{{comment(\'' + column + '\',\'' + comment + '\')}}"'  
-            if not loop.last():
-                comment_block += ','
-            comment_block += '\n'
+            comment_block += '\n"{{comment(\'' + column + '\',\'' + comment + '\')}}"'  
+            comment_block += ','
+        
+        comment_block = comment_block[:-1]
 
-        comment_block += ']})}}'
+        comment_block += '\n]})}}'
  
         return comment_block
         
 
     def _generate_schema_tests(self):
-        pass
+        schema_test_file_path = self.config['dbt_root_path'] + os.path.sep + 'models' + os.path.sep + self.model_grouping + os.path.sep + 'schema.yml'
+        try:
+            schema_test_file = open(schema_test_file_path, 'a')
+        
+        except:
+            self.logger.error("Unable to append to schema.yml file: {} : {}".format(sys.exc_info()[0], sys.exc_info()[1]))            
+            self._unwind()
+            
+        not_nulls = []
+
+        uniques = []
+
+        for k, v in self.columns.items():
+            if v[1] == 1:
+                not_nulls.append(k.lower()) 
+            if v[2] == 1:
+                uniques.append(k.lower())
+
+        yaml_test_lines = ['']
+        yaml_test_lines.append(self.table.upper() + ':')
+        yaml_test_lines.append('  constraints:')
+        yaml_test_lines.append('    not_null:')
+
+        for n in not_nulls:
+            yaml_test_lines.append('      - '+n)
+   
+        yaml_test_lines.append('')
+        yaml_test_lines.append('    unique:')
+
+
+        for n in uniques:
+            yaml_test_lines.append('      - '+n)
+        
+        schema_test_file.write('\n'.join(yaml_test_lines))
+        schema_test_file.write('\n')
+    
+        schema_test_file.close()
 
     def generate(self):
         self._generate_file('mid')
@@ -96,7 +132,19 @@ class Scaffold:
         self._generate_schema_tests()
 
     def _unwind(self):
-        pass
+        self.logger.error('Unwinding mid and analytics models;')
+        try:
+            paths_to_models = (self.config['dbt_root_path'] + os.path.sep + 'models' + os.path.sep + self.model_grouping + os.path.sep + 'mid' + os.path.sep + 'MID_' + self.table.upper() + '.sql', 
+                               self.config['dbt_root_path'] + os.path.sep + 'models' + os.path.sep + self.model_grouping + os.path.sep + 'analytics' + os.path.sep + self.table.upper() + '.sql')
+
+            for path in paths_to_models:
+                os.remove(path)
+
+        except:
+            self.logger.error("Unable to unwind scaffolding: {} : {}".format(sys.exc_info()[0], sys.exc_info()[1]))            
+        
+        sys.exit()
+
 
 # TODO: add private model layer
 

@@ -7,174 +7,228 @@ class Gui:
 
 
     def __init__(self):
-        self.window.minsize(800,500)
+        self.window.geometry('660x650')
         self.window.title('DBT Gen: model template engine')
-        self.v.set('Prepairing your local repo..')
+        
+        # build containers
+        self.header = Frame(self.window, width=650, height=50, pady=3)
+        self.body = Frame(self.window,  width=650, height=500, pady=3)
+        self.footer = Frame(self.window, width= 650, height= 100, pady=3)    
+        self.footer_button_box = Frame(self.footer, width= 350, height= 100, pady=3)
+
+        # configure the parent window grid
+        self.window.grid_rowconfigure(1, weight=1)
+        self.window.grid_columnconfigure(0, weight=1)
+        
+        # arrange containers
+        self.header.grid(row=0, sticky= 'ew')
+        self.body.grid(row=1,sticky='nsew')
+        self.body.grid_columnconfigure(0,weight=1)
+        self.body.grid_rowconfigure(0,weight=1)
+        self.footer.grid(row=3, sticky='ew')    
+        self.footer.grid_columnconfigure(1,weight=1)
+        self.footer_button_box.grid(row=1, column=2, sticky='w')
+        
+        self.header.grid_rowconfigure(1,weight=1)
+        self.header.grid_columnconfigure(0,weight=1)
+
+        self.headline = Label(self.header, text="DBT Gen", font=('Impact',20))
+
+        self.headline.grid(row=0)
+        
+        
+        self.marquee = StringVar()
+        self.marquee_label = Label(self.header, textvariable=self.marquee, font=('Impact',16))
+        self.marquee_label.grid(row=1)
+
+    def __str__(self):
+        print("Tkinter GUI")
+
+    def _set_marquee(self,headline):
+        self.marquee.set(headline)
+
+    def _clear_children(self,obj):
+        for child in obj.winfo_children():
+            child.destroy()
 
     def welcome_message(self):
-        welcome = Label(self.window, text="DBT Gen", font=('Impact',20))
-        welcome.grid(row=0, column=0, columnspan=20)
+        self._set_marquee('Data Build Tool Template Generator')
         self.window.update()
 
     def prepairing_dbt_repo(self):
-        text = Label(self.window, textvariable=self.v, font=('Impact',16))
-        text.grid(row=1, column=0, columnspan=20)
+        self._set_marquee('Prepairing your repo...')
         self.window.update()
 
     def repo_prepaired(self):
-        self.v.set("MASTER repo checked out and current with production")
+        self._set_marquee('MASTER repo checked out and current with production')
         self.window.update()
 
     def failed_to_prepare_repo(self):
-        self.v.set("ERROR: unable to update your local repo")
+        self._set_marquee("ERROR: unable to update your local repo")
         self.window.update()
 
     def gathering_lake_tables(self):
-        self.v.set("Gathering tables from Data Lake...")
+        self._set_marquee("Gathering tables from Data Lake...")
         self.window.update()
 
     def select_lake_table(self, tables,callback):
-        frame = Frame(self.window, bd=2, relief=SUNKEN)
-
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
-
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Please select the data lake table to be transformed:")
         _locals = {"selecting_table":True}
-
-        self.v.set("Please select the data lake table to be transformed:")
             
-        self.scrollbar = Scrollbar(self.window)
-        self.scrollbar.grid(row=0, column=1, sticky=N+S)
-        
-        self.listbox = Listbox(self.window, yscrollcommand=self.scrollbar.set)
+        listbox = Listbox(self.body)
         for i in tables:
-            self.listbox.insert(END, i[0]+'.'+i[1])
-        self.listbox.config(width=90, height=45)
-        self.listbox.grid(row=4, column=0, columnspan=10, rowspan=10, padx=1)
-        self.scrollbar.config(command=self.listbox.yview)
+            listbox.insert(END, i[0]+'.'+i[1])
+        listbox.grid_columnconfigure(0, weight=1)
+        listbox.grid_rowconfigure(0, weight=1)
+
+        listbox.grid(row=0, column=0, padx=3,pady=3, sticky='nsew')
         
         def select_table_click():
-            callback(self.listbox.get(self.listbox.curselection()))    
+            callback(listbox.get(listbox.curselection()))    
             _locals['selecting_table'] = False
+        
+        self.select_table_button = Button(self.footer_button_box, text="select table", command = select_table_click);
 
-        self.button = Button(self.window, text= "select table", command = select_table_click)
-        self.button.grid(row=12, column= 8)
+        self.select_table_button.grid()
         
         while _locals['selecting_table']:
             self.window.update()
         
     def checking_selection(self):
-        self.listbox.destroy()
-        self.scrollbar.destroy()
-        self.button.destroy()
-        self.v.set("Checking your selection and building your repo..")    
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Checking your selection and building your repo...")    
         self.window.update()
 
     def reject_selection(self, existing_model):
-        self.v.set("Warning: the model {} already exits. Unable to build repo.".format(existing_model))    
+        self._set_marquee("Warning: the model {} already exits. Unable to build repo.".format(existing_model))    
         self.window.mainloop()
+    
+    
+    def failed_to_build_new_repo(self):
+        self._set_marquee("ERROR: Failed to build new repo")
+        self.window.update()
 
     def getting_table_columns(self,table):
-        pass
+        self._set_marquee("Creating column matrix...")    
+        self.window.update()
 
     def column_matrix(self, columns, callback):
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Select the columns to exclude, set tests, and add comments")    
+
         _locals = {'setting_up_columns':True}
 
-        self.matrix = Frame(self.window, background="black")
+        matrix = Frame(self.body, background="black")
+        matrix.grid_columnconfigure(6, weight=1)
+        matrix.grid_rowconfigure(len(columns), weight=1)
 
-        self.checkbox_vars = dict()
+        checkbox_vars = dict()
    
         for column in columns:
-            self.checkbox_vars[column] = [IntVar(),IntVar(),IntVar(),IntVar(),StringVar()]
+           checkbox_vars[column] = [IntVar(),IntVar(),IntVar(),StringVar()]
 
-        self.matrix._widgets = []
+        matrix_header = []
+        matrix_header.append(Label(matrix, text = "Column Name"))
+        matrix_header.append(Label(matrix, text = "Exclude?"))
+        matrix_header.append(Label(matrix, text = "Not Null?"))
+        matrix_header.append(Label(matrix, text = "Unique?"))
+        matrix_header.append(Label(matrix, text = "Description"))
         
-        header = []
-        header.append(Label(self.window, text = "Column Name", borderwidth=0, width= 15))
-        header.append(Label(self.window, text = "Exclude?", borderwidth=0, width= 10))
-        header.append(Label(self.window, text = "Not Null?", borderwidth=0, width= 10))
-        header.append(Label(self.window, text = "Unique?", borderwidth=0, width= 10))
-        header.append(Label(self.window, text = "Description", borderwidth=0, width= 10))
-        
-        for index, col in enumerate(header):
+        for index, col in enumerate(matrix_header):
             col.grid(row=0, column=index, sticky="nsew", padx=1,pady=1)        
-
-        self.matrix._widgets.append(header)
 
         for row in range(len(columns)-1):
             current_row = []
-            current_row.append(Label(self.window, text = columns[row], borderwidth=0, width= 15))
-            current_row.append(Checkbutton(self.window, variable=self.checkbox_vars[columns[row]][0]))
-            current_row.append(Checkbutton(self.window, variable=self.checkbox_vars[columns[row]][1]))
-            current_row.append(Checkbutton(self.window, variable=self.checkbox_vars[columns[row]][2]))
-            current_row.append(Entry(self.window, text='', textvariable=self.checkbox_vars[columns[row]][3]))
+            current_row.append(Label(matrix, text = columns[row], borderwidth=0, width= 15))
+            current_row.append(Checkbutton(matrix, variable=checkbox_vars[columns[row]][0]))
+            current_row.append(Checkbutton(matrix, variable=checkbox_vars[columns[row]][1]))
+            current_row.append(Checkbutton(matrix, variable=checkbox_vars[columns[row]][2]))
+            current_row.append(Entry(matrix,   textvariable=checkbox_vars[columns[row]][3]))
 
             for index, r in enumerate(current_row):
-                r.grid(row=row,  column=index, sticky="nsew", padx=1,pady=1)
+                r.grid(row=row + 1,  column=index, sticky="nsew", padx=1,pady=1)
 
-            self.matrix._widgets.append(current_row)
-        
-        for col in range(6):
-            self.matrix.grid_columnconfigure(col, weight=1)
-
-        self.matrix.grid()
+        matrix.grid(column=0,row=0, padx=1, pady=1)
         
         def submit_columns():
             finalized_input_values = dict()
-            for col, values in self.checkbox_vars.items():
+            for col, values in checkbox_vars.items():
                 finalized_input_values[col] = []
                 for val in values:
                     finalized_input_values[col].append(val.get())
+
             callback(finalized_input_values)
             _locals['setting_up_columns'] = False        
 
-        self.button = Button(self.window, text= "Create Models", command = submit_columns)
-        self.button.grid(row=12, column= 8)
+        set_columns_button = Button(self.footer_button_box, text= "Create Models", command = submit_columns)
+        set_columns_button.grid(row=12, column= 8)
 
         while _locals['setting_up_columns']:
             self.window.update()
         
-    def select_model_group(self, model_groups,callback):
-        self.matrix.destroy()
-        self.button.destroy()
-        
-        frame = Frame(self.window, bd=2, relief=SUNKEN)
 
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
+    def select_model_group(self, model_groups,callback):
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Select the parent model grouping for the new table")    
 
         _locals = {"selecting_model_group":True}
-
-        self.v.set("Please select the model group for the new table:")
             
-        self.scrollbar = Scrollbar(self.window)
-        self.scrollbar.grid(row=0, column=1, sticky=N+S)
         
-        self.listbox = Listbox(self.window, yscrollcommand=self.scrollbar.set)
+        listbox = Listbox(self.body)
         for i in model_groups:
-            self.listbox.insert(END, i)
-        self.listbox.config(width=90, height=45)
-        self.listbox.grid(row=4, column=0, columnspan=10, rowspan=10, padx=1)
-        self.scrollbar.config(command=self.listbox.yview)
+            listbox.insert(END, i)
+        listbox.grid_columnconfigure(0, weight=1)
+        listbox.grid_rowconfigure(0, weight=1)
+
+        listbox.grid(row=0, column=0, padx=3,pady=3, sticky='nsew')
         
-        def select_table_click():
-            callback(self.listbox.get(self.listbox.curselection()))    
+        def select_grouping_click():
+            callback(listbox.get(listbox.curselection()))    
             _locals['selecting_model_group'] = False
 
-        self.button = Button(self.window, text= "Select Model Group", command = select_table_click)
-        self.button.grid(row=12, column= 8)
+        select_grouping_button = Button(self.footer_button_box, text= "Select Model Group", command = select_grouping_click)
+        select_grouping_button.grid()
         
         while _locals['selecting_model_group']:
             self.window.update()
 
-    def generating_models_and_tests(self, table_name):
-        pass
-    def committing_and_pushing(self):
-        pass
-    def commit_failed(self):
-        pass
-    def completed(self):
-        pass
+    def generating_models_and_tests(self):
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Generating dbt models and populating schema tests...")    
+        self.window.update()
 
+    def committing_and_pushing(self):
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Commiting work and pushing to origin...")    
+        self.window.update()
+
+    def commit_failed(self):
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee("Commit/Push FAILED!!")    
+        self.window.update()
+
+    def completed(self):
+        self._clear_children(self.body)
+        self._clear_children(self.footer_button_box)
+        self._set_marquee('')    
+
+        completed_text = Label(self.body, text = "Completed! You can view your branch on GitHub and create a pull reqeust.")
+        completed_text.grid(column=0, row=0, sticky='nsew')
+
+        def exit_click():
+            sys.exit()
+
+        exit_button = Button(self.footer_button_box, text= "Finish", command = exit_click)
+        exit_button.grid()
+        
+        self.window.mainloop()
 
 
